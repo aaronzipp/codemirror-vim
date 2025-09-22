@@ -320,33 +320,32 @@ const vimPlugin = ViewPlugin.fromClass(
             if (text === "\0\0") {
               return true;
             }
-            CodeMirror.signal(cm, 'inputEvent', {
-              type: "text",
-              text,
-              from, 
-              to,              
-            });
-            if (text.length == 1 && vimPlugin.useNextTextInput) {
-              if (vim.expectLiteralNext && view.composing) {
-                vimPlugin.compositionText = text;
-                return false
-              }
-              if (vimPlugin.compositionText) {
-                var toRemove = vimPlugin.compositionText;
-                vimPlugin.compositionText = '';
-                var head = view.state.selection.main.head
-                var textInDoc = view.state.sliceDoc(head - toRemove.length, head);
-                if (toRemove === textInDoc) {
-                  var pos = cm.getCursor();
-                  cm.replaceRange('', cm.posFromIndex(head - toRemove.length), pos);
+            if (vimPlugin.useNextTextInput) {
+              vimPlugin.useNextTextInput = false;
+              if (text.length == 1) {
+                if (vim.expectLiteralNext && view.composing) {
+                  vimPlugin.compositionText = text;
+                  return true;
                 }
+                if (vimPlugin.compositionText) {
+                  var toRemove = vimPlugin.compositionText;
+                  vimPlugin.compositionText = '';
+                  var head = view.state.selection.main.head
+                  var textInDoc = view.state.sliceDoc(head - toRemove.length, head);
+                  if (toRemove === textInDoc) {
+                    var pos = cm.getCursor();
+                    cm.replaceRange('', cm.posFromIndex(head - toRemove.length), pos);
+                  }
+                }
+                vimPlugin.handleKey({
+                  key: text,
+                  preventDefault: ()=>{},
+                  stopPropagation: ()=>{}
+                });
+                forceEndComposition(view);
               }
-              vimPlugin.handleKey({
-                key: text,
-                preventDefault: ()=>{},
-                stopPropagation: ()=>{}
-              });
-              forceEndComposition(view);
+              return true;
+            } else {
               return true;
             }
           }

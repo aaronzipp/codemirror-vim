@@ -1216,6 +1216,10 @@ export function initVim(CM) {
    */
   function vimKeyFromEvent(e, vim) {
     var key = e.key;
+    // Normalize repeated dead key compositions (e.g., "^^" -> "^", "йй" -> "й")
+    if (key.length > 1 && key.split('').every(c => c === key[0])) {
+      key = key[0];
+    }
     if (ignoredKeys[key]) return;
     if (key.length > 1 && key[0] == "n") {
       key = key.replace("Numpad", "");
